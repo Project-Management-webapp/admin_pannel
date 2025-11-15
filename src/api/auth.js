@@ -9,6 +9,15 @@ export const adminLogin = async (credentials) => {
   }
 };
 
+export const getProfile = async () => {
+  try {
+    const response = await api.get('/admin/profile');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Something went wrong' };
+  }
+};
+
 export const adminLogout = async () => {
   try {
     const response = await api.post('/auth/admin/logout');

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineEyeInvisible, AiOutlineEye } from "react-icons/ai";
-import { FaArrowLeft } from "react-icons/fa";
 import logo from "/login_logo.png";
 
 import { adminLogin, forgotPassword } from "../api/auth";
