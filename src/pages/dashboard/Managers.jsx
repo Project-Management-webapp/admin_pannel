@@ -11,6 +11,7 @@ const Managers = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(9);
+  const [filterStatus, setFilterStatus] = useState('all');
   const [toast, setToast] = useState({
     show: false,
     message: '',
@@ -50,11 +51,16 @@ const Managers = () => {
     setIsModalOpen(true);
   };
 
+  // Filter managers by approval status
+  const filteredManagers = filterStatus === 'all' 
+    ? managers 
+    : managers.filter(m => m.approvalStatus === filterStatus);
+
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentManagers = managers.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(managers.length / itemsPerPage);
+  const currentManagers = filteredManagers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredManagers.length / itemsPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -93,10 +99,68 @@ const Managers = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white">Managers</h1>
-          <p className="text-gray-400 mt-1">Total: {managers.length} managers</p>
+          <p className="text-gray-400 mt-1">
+            {filterStatus === 'all' ? `Total: ${managers.length}` : `${filteredManagers.length} of ${managers.length}`} managers
+          </p>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => {
+              setFilterStatus('all');
+              setCurrentPage(1);
+            }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+              filterStatus === 'all'
+                ? 'bg-linear-to-r from-[#ac51fc] to-[#8800FF] text-white'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => {
+              setFilterStatus('approved');
+              setCurrentPage(1);
+            }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+              filterStatus === 'approved'
+                ? 'bg-green-600 text-white  '
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            Approved
+          </button>
+          <button
+            onClick={() => {
+              setFilterStatus('pending');
+              setCurrentPage(1);
+            }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+              filterStatus === 'pending'
+                ? 'bg-yellow-600 text-white  '
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            Pending
+          </button>
+          <button
+            onClick={() => {
+              setFilterStatus('rejected');
+              setCurrentPage(1);
+            }}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+              filterStatus === 'rejected'
+                ? 'bg-red-600 text-white  '
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            Rejected
+          </button>
         </div>
         
       </div>
@@ -123,10 +187,12 @@ const Managers = () => {
             </div>
           ))}
         </div>
-      ) : managers.length === 0 ? (
+      ) : filteredManagers.length === 0 ? (
         <div className="bg-white/10 backdrop-blur-md rounded-lg p-12 border border-white/20 text-center">
           <FiUserCheck size={48} className="mx-auto mb-4 text-gray-400" />
-          <p className="text-xl text-gray-400">No managers found</p>
+          <p className="text-xl text-gray-400">
+            {filterStatus === 'all' ? 'No managers found' : `No ${filterStatus} managers found`}
+          </p>
         </div>
       ) : (
         <>

@@ -78,10 +78,11 @@ const Toaster = ({
 
   return (
     <div
-      className={`fixed bottom-5 right-5 z-50 flex items-center ${bgColor} text-white px-4 py-2 rounded-md shadow-lg transition-all duration-300`}
+      className={`fixed bottom-5 right-5 z-9999 flex items-center ${bgColor} text-white px-5 py-3 rounded-lg shadow-2xl transition-all duration-300 border-2 border-white/20`}
       style={{
-        width: "220px", 
-        minHeight: "48px",
+        minWidth: "280px",
+        maxWidth: "400px",
+        minHeight: "56px",
       }}
     >
       {loading && <Spinner />}

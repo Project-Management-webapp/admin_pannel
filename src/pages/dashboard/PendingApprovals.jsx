@@ -9,6 +9,9 @@ const PendingApprovals = () => {
   const [loading, setLoading] = useState(true);
   const [selectedManager, setSelectedManager] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [managerToReject, setManagerToReject] = useState(null);
   const [toast, setToast] = useState({
     show: false,
     message: '',
@@ -83,7 +86,18 @@ const PendingApprovals = () => {
     }
   };
 
-  const handleReject = async (managerId) => {
+  const handleRejectClick = (managerId) => {
+    setManagerToReject(managerId);
+    setIsRejectModalOpen(true);
+    setIsModalOpen(false);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!managerToReject) return;
+
+    // Close modal first to make toaster visible
+    setIsRejectModalOpen(false);
+
     try {
       setToast({
         show: true,
@@ -92,7 +106,7 @@ const PendingApprovals = () => {
         loading: true,
       });
 
-      const response = await rejectManager(managerId);
+      const response = await rejectManager(managerToReject, rejectionReason);
       
       if (response.success) {
         setToast({
@@ -102,8 +116,9 @@ const PendingApprovals = () => {
           loading: false,
         });
 
-        setPendingManagers((prev) => prev.filter((m) => m.id !== managerId));
-        setIsModalOpen(false);
+        setPendingManagers((prev) => prev.filter((m) => m.id !== managerToReject));
+        setRejectionReason('');
+        setManagerToReject(null);
         setSelectedManager(null);
       }
     } catch (error) {
@@ -114,6 +129,13 @@ const PendingApprovals = () => {
         loading: false,
       });
     }
+  };
+
+  const handleRejectCancel = () => {
+    setIsRejectModalOpen(false);
+    setRejectionReason('');
+    setManagerToReject(null);
+    setIsModalOpen(true);
   };
 
   return (
@@ -198,9 +220,45 @@ const PendingApprovals = () => {
         }}
         manager={selectedManager}
         onApprove={handleApprove}
-        onReject={handleReject}
+        onReject={handleRejectClick}
         isPending={true}
       />
+
+      {/* Rejection Reason Modal */}
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-lg bg-gray-800 p-6 text-white shadow-xl border border-white/20">
+            <h3 className="text-xl font-bold mb-4">Reject Manager</h3>
+            <p className="text-gray-300 text-sm mb-4">
+              Please provide a reason for rejecting this manager application.
+            </p>
+            
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="Enter rejection reason..."
+              rows="4"
+              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-[#ac51fc] focus:ring-1 focus:ring-[#ac51fc] resize-none"
+            />
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleRejectCancel}
+                className="flex-1 px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition-colors font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRejectConfirm}
+                disabled={!rejectionReason.trim()}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast.show && (
         <Toaster

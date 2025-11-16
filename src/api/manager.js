@@ -38,9 +38,11 @@ export const approveManager = async (managerId) => {
 };
 
 
-export const rejectManager = async (managerId) => {
+export const rejectManager = async (managerId, reason = '') => {
   try {
-    const response = await api.put(`/admin/managers/${managerId}/reject`);
+    const response = await api.put(`/admin/managers/${managerId}/reject`, {
+      reason: reason || 'No reason provided'
+    });
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Something went wrong in  manager rejection' };
