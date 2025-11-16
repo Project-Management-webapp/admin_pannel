@@ -1,14 +1,10 @@
 import React from "react";
 import TwoFactorToggle from "../../components/TwoFactorToggle";
 import GoogleAuthToggle from "../../components/GoogleAuthToggle";
-import Toaster from "../../components/Toaster";
+
 
 const Settings = () => {
-  const [toast, setToast] = React.useState({
-    show: false,
-    message: "",
-    type: "",
-  });
+  
   const [is2FAEnabled, setIs2FAEnabled] = React.useState(false);
   const [isGoogleAuthEnabled, setIsGoogleAuthEnabled] = React.useState(false);
 

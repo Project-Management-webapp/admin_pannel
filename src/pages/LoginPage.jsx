@@ -4,8 +4,12 @@ import { AiOutlineEyeInvisible, AiOutlineEye } from "react-icons/ai";
 import logo from "/login_logo.png";
 
 import { adminLogin, forgotPassword } from "../api/auth";
+import { sendOTP, verifyOTP, completeLogin } from "../api/twoFactor";
+import { verifyGoogleAuthCode } from "../api/googleAuth";
 
 import Toaster from "../components/Toaster";
+import TwoFactorVerification from "../components/TwoFactorVerification";
+import GoogleAuthVerification from "../components/GoogleAuthVerification";
 import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
@@ -34,6 +38,11 @@ const Login = () => {
     loading: false,
   });
 
+  // 2FA States
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [showGoogleAuthModal, setShowGoogleAuthModal] = useState(false);
+  const [twoFactorData, setTwoFactorData] = useState(null);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -52,9 +61,32 @@ const Login = () => {
     try {
       const response = await adminLogin(formData);
 
-      if (response && response.data) {
-        const { user, token } = response.data;
+      if (response && response.success) {
+        // Check if 2FA is required
+        if (response.requiresTwoFactor) {
+          // Store user data for 2FA
+          setTwoFactorData({
+            userId: response.userId,
+            email: response.email
+          });
+          
+          // Check which 2FA method to use
+          if (response.twoFactorMethod === 'google_authenticator') {
+            // Google Authenticator - no need to send OTP
+            setToast({ show: true, message: "Please enter code from Google Authenticator", type: "info", loading: false });
+            setShowGoogleAuthModal(true);
+          } else if (response.twoFactorMethod === 'email_otp') {
+            // Email OTP - send OTP to user's email
+            setToast({ show: true, message: "Sending verification code...", type: "info", loading: false });
+            await sendOTP(response.userId, response.email);
+            setToast({ show: true, message: "Verification code sent to your email", type: "success", loading: false });
+            setShow2FAModal(true);
+          }
+          return;
+        }
 
+        // Normal login without 2FA
+        const { user, token } = response.data;
         login(user, token);
 
         setToast({
@@ -79,6 +111,77 @@ const Login = () => {
       });
       setFormData({ email: "", password: "" });
     }
+  };
+
+  // ---------------- 2FA HANDLERS ----------------
+  const handle2FAVerify = async (otp) => {
+    try {
+      // Verify OTP
+      await verifyOTP(twoFactorData.userId, otp);
+      
+      // Complete login after successful verification
+      const response = await completeLogin(twoFactorData.userId);
+      
+      if (response && response.data) {
+        const { user, token } = response.data;
+        login(user, token);
+
+        setShow2FAModal(false);
+        setToast({ show: true, message: "Successfully logged in!", type: "success", loading: false });
+        
+        setTimeout(() => {
+          navigate("/admin");
+        }, 500);
+      }
+    } catch (error) {
+      throw new Error(error.message || "Invalid OTP. Please try again.");
+    }
+  };
+
+  const handle2FAResend = async () => {
+    try {
+      await sendOTP(twoFactorData.userId, twoFactorData.email);
+      setToast({ show: true, message: "New verification code sent", type: "success", loading: false });
+    } catch (error) {
+      throw new Error(error.message || "Failed to resend code");
+    }
+  };
+
+  const handle2FAClose = () => {
+    setShow2FAModal(false);
+    setTwoFactorData(null);
+    setFormData({ email: "", password: "" });
+  };
+
+  // ---------------- GOOGLE AUTH HANDLERS ----------------
+  const handleGoogleAuthVerify = async (code) => {
+    try {
+      // Verify Google Auth code
+      await verifyGoogleAuthCode(twoFactorData.userId, code);
+      
+      // Complete login after successful verification
+      const response = await completeLogin(twoFactorData.userId);
+      
+      if (response && response.data) {
+        const { user, token } = response.data;
+        login(user, token);
+
+        setShowGoogleAuthModal(false);
+        setToast({ show: true, message: "Successfully logged in!", type: "success", loading: false });
+        
+        setTimeout(() => {
+          navigate("/admin");
+        }, 500);
+      }
+    } catch (error) {
+      throw new Error(error.message || "Invalid code. Please try again.");
+    }
+  };
+
+  const handleGoogleAuthClose = () => {
+    setShowGoogleAuthModal(false);
+    setTwoFactorData(null);
+    setFormData({ email: "", password: "" });
   };
 
   // ---------------- FORGOT PASSWORD ----------------
@@ -256,6 +359,22 @@ const Login = () => {
           onClose={() => setToast({ ...toast, show: false })}
         />
       )}
+
+      {/* 2FA Verification Modal */}
+      <TwoFactorVerification
+        isOpen={show2FAModal}
+        onClose={handle2FAClose}
+        onVerify={handle2FAVerify}
+        onResend={handle2FAResend}
+        userEmail={twoFactorData?.email || ""}
+      />
+
+      {/* Google Auth Verification Modal */}
+      <GoogleAuthVerification
+        isOpen={showGoogleAuthModal}
+        onClose={handleGoogleAuthClose}
+        onVerify={handleGoogleAuthVerify}
+      />
     </div>
   );
 };
