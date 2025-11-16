@@ -8,7 +8,8 @@ import {
   FiUser,
   FiLogOut,
   FiCheckCircle,
-  FiUserCheck
+  FiUserCheck,
+  FiSettings
 } from "react-icons/fi";
 import logo from "/login_logo.png";
 
@@ -107,6 +108,13 @@ const Sidebar = ({
           collapsed={isCollapsed}
           active={activeView === "profile"}
           onClick={() => handleItemClick("profile")}
+        />
+        <SidebarItem
+          icon={<FiSettings size={20} />}
+          text="Settings"
+          collapsed={isCollapsed}
+          active={activeView === "settings"}
+          onClick={() => handleItemClick("settings")}
         />
         <SidebarItem
           icon={<FiLogOut size={20} />}

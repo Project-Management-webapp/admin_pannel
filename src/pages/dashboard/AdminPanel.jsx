@@ -6,6 +6,7 @@ import PendingApprovals from './PendingApprovals';
 import Managers from './Managers';
 import Employees from './Employees';
 import Profile from './Profile';
+import Settings from './Settings';
 import LogoutModal from '../../components/LogoutModal';
 import Toaster from '../../components/Toaster';
 import { useAuth } from '../../context/AuthContext';
@@ -52,6 +53,8 @@ const AdminPanel = () => {
         return <Employees />;
       case 'profile':
         return <Profile />;
+      case 'settings':
+        return <Settings />;
       default:
         return <Profile />;
     }
